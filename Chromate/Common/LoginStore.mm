@@ -5,10 +5,9 @@
 
 #import "LoginStore.h"
 #import "FMDB/FMDB.h"
-#import "LoginCredential.h"
 
 static NSString *const kTableName = @"logins";
-static NSString *const kActionURL = @"action_url";
+static NSString *const kActionURL = @"signon_realm";
 static NSString *const kUsernameValue = @"username_value";
 static NSString *const kPasswordValue = @"password_value";
 
@@ -31,24 +30,25 @@ static NSString *const kPasswordValue = @"password_value";
     return [[self alloc] initWithPath:path];
 }
 
-- (BOOL)readData{
-    if (!_database.open){
+- (BOOL)readData {
+    if (!_database.open) {
         return NO;
     }
 
     NSString *queryString = [NSString stringWithFormat:@"SELECT * FROM %@", kTableName];
     FMResultSet *resultSet = [_database executeQuery:queryString];
     NSMutableArray *mutableLoginCredentials = [NSMutableArray array];
-    while (resultSet.next){
+    while (resultSet.next) {
         NSString *actionURL = [resultSet stringForColumn:kActionURL];
         NSString *username = [resultSet stringForColumn:kUsernameValue];
         NSData *encPassword = [resultSet dataForColumn:kPasswordValue];
 
-        LoginCredential *loginCredential = [LoginCredential credentialWithActionURL:actionURL
-                                                                           username:username
-                                                                  encryptedPassword:encPassword];
+        LoginCredential *loginCredential = [LoginCredential credentialWithSignonRealm:actionURL
+                                                                             username:username
+                                                                    encryptedPassword:encPassword];
         [mutableLoginCredentials addObject:loginCredential];
     }
+    [resultSet close];
     _loginCredentials = mutableLoginCredentials;
 
     return [_database close];
